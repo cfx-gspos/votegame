@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+    .red-underline {
+      text-decoration: underline;
+      text-decoration-color: red;
+    }
+  </style>
+  <head>
+    <!-- Title -->
+    <title>Blank Page</title>
+
+    <!-- Required Meta Tags Always Come First -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="favicon.ico">
+
+ 
+    <!-- CSS Global Compulsory -->
+    <link rel="stylesheet" href="assets/vendor/bootstrap/bootstrap.min.css">
+
+    <!-- CSS Unify -->
+    <link rel="stylesheet" href="assets/css/unify-core.css">
+    <link rel="stylesheet" href="assets/css/unify-components.css">
+    <link rel="stylesheet" href="assets/css/unify-globals.css">
+    <link rel="stylesheet" href="assets/vendor/icon-awesome/css/font-awesome.min.css">
+    <!-- CSS Customization -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+  </head>
+
+  <body>
+    <main>
+      <div class="container g-py-5 text-center">
+        <button class="connect" style="display: none;"> Connect</button>
+        <h5>钱包地址: <span class="showAccount"></span></h5>
+        <div id="app">
+          <ul>
+            <div v-for="item in items" :key="item" >
+             <div class="alert alert-success">
+
+           
+              <h5  @click="toggleExpand( item )" >
+              #{{parseInt(item.id)+1}}  {{item.name}} 
+              
+              <i class="fa fa-arrows-v vertical"></i>
+              <span v-if="item.finalized">(已开奖)</span>
+          
+              </h5>
+             <span class="red-underline"> <i class="fa fa-calendar "></i> 截止日期  {{formatDateTime(item.endTime)}}   </span>
+             <p>当前奖池金额:{{item.totalBid}} CFX</p>
+            </div>
+             
+             <template v-for="(optionItem,optionIndex) in item.optionsItem "  v-if="item.expand"   >
+                <div class="row"  >
+                  <div class="col-3 g-mb-1">   {{ optionItem }}
+                    <span class="">
+                      <i class="fa fa-dollar"></i>
+                    </span>: {{  parseInt(item.arrPool[optionIndex]) }}    <span v-if="item.myArrPool[optionIndex]>0" style="color: red;"> My bid: {{ parseInt(item.myArrPool[optionIndex]) }}</span>   
+                    <span v-if="optionIndex==item.winningOption&&item.finalized" style="color: red;">  
+
+                      <a class="u-tags-v1 g-color-white g-bg-darkpurple g-bg-black--hover g-py-4 g-px-10" href="#!">
+                        <i class="fa fa-tag mr-1"></i>
+                        Win
+                      </a>
+                    </span>   
+                  </div>
+                  <div class="col-5 g-mb-1"  v-if="item.endTime>new Date()"  >  
+                    
+                    <div class="input-group g-brd-primary--focus">
+                      <input class="form-control form-control-md border-right-0 rounded-0 pr-0 bid" type="number" placeholder="填写整数">
+                      <div class="input-group-append">
+                        <span class="input-group-text rounded-0 g-bg-white g-color-gray-light-v1">CFX</span>
+                      </div>
+                    </div>
+
+                   </div>
+                  <div class="col-2 g-mb-1"  v-if="item.endTime>new Date()">  <button  @click="handleItemClick($event,item,optionIndex )"  class="btn btn-md u-btn-inset u-btn-outline-primary g-mr-10 g-mb-15">下注</button>
+                  </div>
+
+               
+               </div>
+              </template>
+      
+            </div>
+          </ul>
+        </div>
+        <div style="display: none;">
+          <h1 id="header">Connect to Metamask</h1>
+          <h2>ChainID: <span class="showChainID"></span></h2>
+          <h2>ETH 余额: <span class="showETHBalance"></span></h2>
+        
+          <h1>Game Information</h1>
+          <div>
+            <p><strong>ID:</strong> <span id="game-id"></span></p>
+            <p><strong>Description:</strong> <span id="game-description"></span></p>
+            <p><strong>End Time:</strong> <span id="game-end-time"></span></p>
+            <p><strong>optionsItem:</strong> <span id="optionsItem"></span></p>
+            <button id="place-bet-btn">下注</button>
+          </div>
+        </div>
+  
+      </div>
+    </main>
+
+    <!-- JS Global Compulsory -->
+    <script src="assets/vendor/jquery/jquery.min.js"></script>
+    <script src="assets/vendor/jquery-migrate/jquery-migrate.min.js"></script>
+    <script src="assets/vendor/popper.min.js"></script>
+    <script src="assets/vendor/bootstrap/bootstrap.min.js"></script>
+
+    <!-- JS Unify -->
+    <script src="assets/js/hs.core.js"></script>
+
+    <!-- JS Custom -->
+    <script src="assets/js/custom.js"></script>
+
+    
+  <script src="./vue.js"></script>
+  <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js1"></script>
+  <script>
+    // VConsole 默认会挂载到 `window.VConsole` 上
+    var vConsole = new window.VConsole1();
+  </script>
+  <script>
+
+  </script>
+  <script src="./jquery-3.6.0.min.js"></script>
+  <script src="./ethers.umd.min.js"></script>
+
+
+  <script type="module">
+    import { ethers } from "./ethers.js"; const ethereumButton = document.querySelector('.connect');
+    const showAccount = document.querySelector('.showAccount');
+    const showChainID = document.querySelector('.showChainID');
+    const showETHBalance = document.querySelector('.showETHBalance');
+
+    ethereumButton.addEventListener(`click`, onClickHandler)
+    setTimeout(() => {
+      onClickHandler()
+    }, 1000);
+    
+    async function onClickHandler() {
+      console.log("连接钱包")
+      // 获得provider
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      // 读取钱包地址
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const account = accounts[0]
+      console.log(`钱包地址: ${account}`)
+      showAccount.innerHTML = account;
+      // 读取chainid
+      const { chainId } = await provider.getNetwork()
+      console.log(`chainid: ${chainId}`)
+      showChainID.innerHTML = chainId;
+      // 读取ETH余额
+      const signer = await provider.getSigner()
+      const balance = await provider.getBalance(signer.getAddress());
+      console.log(`以太坊余额： ${ethers.formatUnits(balance)}`)
+      showETHBalance.innerHTML = ethers.formatUnits(balance);
+    }
+
+  </script>
+  <script src="app.js?id=127"></script>
+  </body>
+</html>
